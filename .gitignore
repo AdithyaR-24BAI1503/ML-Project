@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.db
+*.sqlite3
+generated_invoices/
+payment_screenshot
+.env
+.venv/
+env/
+venv/
