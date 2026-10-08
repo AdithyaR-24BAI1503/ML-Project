@@ -52,7 +52,7 @@ pip install -r requirements.txt
 To launch the full ChatBiz web dashboard locally:
 
 ```bash
-cd "Sprint 6"
+cd Sprint_6
 py -m uvicorn app.main:app --port 8000 --reload
 ```
 
@@ -67,7 +67,7 @@ To run tests across all sprints:
 cd "Sprint 1" && py -m pytest
 
 # Test Sprint 6
-cd "Sprint 6" && py -m pytest
+cd Sprint_6 && py -m pytest
 ```
 
 ---
@@ -77,7 +77,7 @@ cd "Sprint 6" && py -m pytest
 To build and run the ChatBiz Sprint 6 application in Docker:
 
 ```bash
-cd "Sprint 6"
+cd Sprint_6
 docker build -t chatbiz-sprint6 .
 docker run -p 8000:8000 chatbiz-sprint6
 ```

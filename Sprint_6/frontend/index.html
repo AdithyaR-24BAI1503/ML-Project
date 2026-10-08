@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ChatBiz - WhatsApp-First AI Business Management Platform for MSMEs. Manage clients, invoices, payments, reminders, and analytics.">
+  <title>ChatBiz — Executive Business Management & Analytics</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <div class="brand-title-wrap">
+            <h1 class="brand-name">ChatBiz</h1>
+            <span class="badge-sprint">Sprint 6</span>
+          </div>
+          <span class="brand-sub">WhatsApp-First MSME Operating System</span>
+        </div>
+      </div>
+
+      <!-- Center System Tabs -->
+      <nav class="nav-tabs" id="main-nav-tabs">
+        <button class="nav-tab active" id="tab-btn-analytics" onclick="switchTab('analytics')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Analytics
+        </button>
+        <button class="nav-tab" id="tab-btn-clients" onclick="switchTab('clients')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Clients
+          <span class="tab-pill" id="badge-clients-count">0</span>
+        </button>
+        <button class="nav-tab" id="tab-btn-invoices" onclick="switchTab('invoices')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Invoices
+          <span class="tab-pill" id="badge-invoices-count">0</span>
+        </button>
+        <button class="nav-tab" id="tab-btn-payments" onclick="switchTab('payments')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Payments
+        </button>
+        <button class="nav-tab" id="tab-btn-reminders" onclick="switchTab('reminders')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Reminders & Voice
+        </button>
+      </nav>
+
+      <!-- Right Action Controls -->
+      <div class="topbar-actions">
+        <!-- Live Connection Indicator -->
+        <div class="status-indicator-pill" id="api-status-badge" onclick="openApiConfigModal()" title="Click to configure backend API endpoint">
+          <span class="status-dot"></span>
+          <span class="status-text" id="api-status-label">Checking Backend...</span>
+        </div>
+
+        <button class="btn btn-secondary btn-sm" id="btn-refresh" onclick="refreshCurrentTab(true)" title="Refresh Data from Backend">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+
+        <a class="btn btn-accent btn-sm" id="btn-export-csv" href="http://127.0.0.1:8000/api/export/invoices" download="chatbiz_invoices.csv" target="_blank">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </a>
+      </div>
+    </header>
+
+    <!-- Backend Disconnected Alert Banner -->
+    <div class="offline-banner" id="offline-banner" style="display: none;">
+      <div class="offline-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>
+          <strong>Backend API Offline:</strong> Unable to connect to <code id="offline-url-text">http://127.0.0.1:8000</code>.
+          Please run: <code class="code-cmd">cd Sprint_6 &amp;&amp; python -m uvicorn app.main:app --reload</code>
+        </span>
+      </div>
+      <button class="btn btn-sm btn-outline-light" onclick="checkBackendHealth()">Retry Connection</button>
+    </div>
+
+    <!-- Main Content Body -->
+    <main class="main-content">
+      
+      <!-- ======================================================== -->
+      <!-- TAB 1: ANALYTICS DASHBOARD                              -->
+      <!-- ======================================================== -->
+      <section class="tab-pane active" id="pane-analytics">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Executive Business Analytics</h2>
+            <p class="view-subtitle">Real-time financial telemetry, cash collection rate, and MSME client receivables.</p>
+          </div>
+          <div class="header-tools">
+            <span class="metric-timestamp" id="analytics-updated-at">Auto-synced</span>
+          </div>
+        </div>
+
+        <!-- 6 KPI Stat Cards Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card card-glow-primary">
+            <div class="kpi-header">
+              <span class="kpi-label">Total Invoiced</span>
+              <span class="kpi-icon-wrap icon-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </span>
+            </div>
+            <div class="kpi-value" id="kpi-total-invoiced">₹0.00</div>
+            <div class="kpi-subtext">Across <b id="kpi-invoice-count">0</b> total invoices generated</div>
+          </div>
+
+          <div class="kpi-card card-glow-success">
+            <div class="kpi-header">
+              <span class="kpi-label">Paid / Collected</span>
+              <span class="kpi-icon-wrap icon-success">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </span>
+            </div>
+            <div class="kpi-value value-success" id="kpi-paid-amount">₹0.00</div>
+            <div class="kpi-subtext"><span class="badge badge-success" id="kpi-paid-count">0 Paid</span> verified settlements</div>
+          </div>
+
+          <div class="kpi-card card-glow-warning">
+            <div class="kpi-header">
+              <span class="kpi-label">Pending Collection</span>
+              <span class="kpi-icon-wrap icon-warning">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+            </div>
+            <div class="kpi-value value-warning" id="kpi-pending-amount">₹0.00</div>
+            <div class="kpi-subtext"><span class="badge badge-warning" id="kpi-pending-count">0 Pending</span> awaiting payment</div>
+          </div>
+
+          <div class="kpi-card card-glow-danger">
+            <div class="kpi-header">
+              <span class="kpi-label">Overdue at Risk</span>
+              <span class="kpi-icon-wrap icon-danger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </span>
+            </div>
+            <div class="kpi-value value-danger" id="kpi-overdue-amount">₹0.00</div>
+            <div class="kpi-subtext"><span class="badge badge-danger" id="kpi-overdue-count">0 Overdue</span> reminders queued</div>
+          </div>
+
+          <div class="kpi-card card-glow-info">
+            <div class="kpi-header">
+              <span class="kpi-label">Client Portfolio</span>
+              <span class="kpi-icon-wrap icon-info">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </span>
+            </div>
+            <div class="kpi-value" id="kpi-client-count">0</div>
+            <div class="kpi-subtext">Active MSME profiles registered</div>
+          </div>
+
+          <div class="kpi-card card-glow-purple">
+            <div class="kpi-header">
+              <span class="kpi-label">Collection Rate</span>
+              <span class="kpi-icon-wrap icon-purple">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+              </span>
+            </div>
+            <div class="kpi-value value-purple" id="kpi-collection-rate">0.0%</div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="kpi-collection-progress" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytical Breakdown Grid -->
+        <div class="dashboard-split-grid">
+          <!-- Client Revenue Leaderboard -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Client Performance Leaderboard</h3>
+              <span class="panel-tag">Ranked by Total Invoiced</span>
+            </div>
+            <div class="panel-body">
+              <div class="table-container">
+                <table class="data-table" id="analytics-clients-table">
+                  <thead>
+                    <tr>
+                      <th>Client Name</th>
+                      <th>Invoices</th>
+                      <th>Total Invoiced</th>
+                      <th>Amount Paid</th>
+                      <th>Pending Balance</th>
+                      <th>Collection %</th>
+                    </tr>
+                  </thead>
+                  <tbody id="analytics-clients-tbody">
+                    <tr><td colspan="6" class="text-center py-4 text-muted">Loading metrics...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action & System Health Panel -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">System Status & Quick Actions</h3>
+              <span class="panel-tag">FastAPI v6.0</span>
+            </div>
+            <div class="panel-body flex-col gap-4">
+              <div class="quick-action-cards">
+                <button class="action-card" onclick="openNewInvoiceModal()">
+                  <div class="action-icon action-icon-green">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
+                  <div class="action-details">
+                    <div class="action-name">Generate Invoice</div>
+                    <div class="action-desc">Issue UPI-linked invoice to client</div>
+                  </div>
+                </button>
+
+                <button class="action-card" onclick="openNewClientModal()">
+                  <div class="action-icon action-icon-blue">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                  </div>
+                  <div class="action-details">
+                    <div class="action-name">Onboard New Client</div>
+                    <div class="action-desc">Register phone, email, and MSME name</div>
+                  </div>
+                </button>
+
+                <button class="action-card" onclick="openNewPaymentModal()">
+                  <div class="action-icon action-icon-amber">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  </div>
+                  <div class="action-details">
+                    <div class="action-name">Record Payment</div>
+                    <div class="action-desc">Log UPI, OCR, or cash settlement</div>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Database Reset / Seed Helper -->
+              <div class="db-tools-box">
+                <div class="db-tools-info">
+                  <div class="db-tools-title">Sample Data Controls</div>
+                  <div class="db-tools-desc">Populate or refresh the 8 sample MSME clients, 16 invoices, and payments in SQLite.</div>
+                </div>
+                <button class="btn btn-outline-warning btn-sm" onclick="triggerDbSeed(true)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  Re-seed Sample Data
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ======================================================== -->
+      <!-- TAB 2: CLIENTS DIRECTORY                                -->
+      <!-- ======================================================== -->
+      <section class="tab-pane" id="pane-clients">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Client Directory</h2>
+            <p class="view-subtitle">Manage customer directory, view contact details, and inspect individual account ledgers.</p>
+          </div>
+          <div class="header-tools">
+            <div class="search-input-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="client-search-input" placeholder="Search clients by name, phone, or email..." oninput="filterClients()">
+            </div>
+            <button class="btn btn-primary" onclick="openNewClientModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Client
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Client Name &amp; Business</th>
+                <th>Phone Number</th>
+                <th>Email Address</th>
+                <th>Invoices</th>
+                <th>Total Invoiced</th>
+                <th>Paid</th>
+                <th>Pending Balance</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody">
+              <tr><td colspan="9" class="text-center py-4 text-muted">Loading clients...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- ======================================================== -->
+      <!-- TAB 3: INVOICES MANAGEMENT                              -->
+      <!-- ======================================================== -->
+      <section class="tab-pane" id="pane-invoices">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Invoices Management</h2>
+            <p class="view-subtitle">Track, filter, and issue dynamic UPI-linked invoices across all payment stages.</p>
+          </div>
+          <div class="header-tools">
+            <!-- Filter Pills -->
+            <div class="filter-pills">
+              <button class="filter-pill active" data-filter="all" onclick="setInvoiceFilter('all', this)">All</button>
+              <button class="filter-pill" data-filter="Pending" onclick="setInvoiceFilter('Pending', this)">Pending</button>
+              <button class="filter-pill" data-filter="Paid" onclick="setInvoiceFilter('Paid', this)">Paid</button>
+              <button class="filter-pill" data-filter="Overdue" onclick="setInvoiceFilter('Overdue', this)">Overdue</button>
+            </div>
+
+            <div class="search-input-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="invoice-search-input" placeholder="Search by description or client..." oninput="handleInvoiceSearch()">
+            </div>
+
+            <button class="btn btn-primary" onclick="openNewInvoiceModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Invoice
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Invoice ID</th>
+                <th>Client Name</th>
+                <th>Description</th>
+                <th>Amount (INR)</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>UPI Handle</th>
+                <th>Type</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoices-tbody">
+              <tr><td colspan="9" class="text-center py-4 text-muted">Loading invoices...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- ======================================================== -->
+      <!-- TAB 4: PAYMENTS LEDGER                                  -->
+      <!-- ======================================================== -->
+      <section class="tab-pane" id="pane-payments">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Payment Settlements Ledger</h2>
+            <p class="view-subtitle">Audit trail of verified payment transactions via UPI webhooks, OCR screenshot scans, and manual receipts.</p>
+          </div>
+          <div class="header-tools">
+            <button class="btn btn-primary" onclick="openNewPaymentModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              Record Payment
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Payment ID</th>
+                <th>Transaction Reference</th>
+                <th>Invoice &amp; Client</th>
+                <th>Amount</th>
+                <th>Payment Date</th>
+                <th>Source Channel</th>
+                <th>Receipt / Verification Note</th>
+              </tr>
+            </thead>
+            <tbody id="payments-tbody">
+              <tr><td colspan="7" class="text-center py-4 text-muted">Loading payment ledger...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- ======================================================== -->
+      <!-- TAB 5: REMINDERS & VOICE                                -->
+      <!-- ======================================================== -->
+      <section class="tab-pane" id="pane-reminders">
+        <div class="view-header">
+          <div>
+            <h2 class="view-title">Automated Reminders &amp; Voice Commands</h2>
+            <p class="view-subtitle">WhatsApp reminder schedules and voice assistant natural language intent classifications.</p>
+          </div>
+        </div>
+
+        <div class="two-column-grid">
+          <!-- Left Column: WhatsApp Reminders Schedule -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">WhatsApp Payment Reminders</h3>
+              <span class="panel-tag">Simulated WhatsApp Business API</span>
+            </div>
+            <div class="panel-body p-0">
+              <div class="reminders-list" id="reminders-list-container">
+                <div class="text-center py-4 text-muted">Loading reminders...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Voice Assistant Intent Logs -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Voice Assistant Command Feed</h3>
+              <span class="panel-tag">NLP Intent Classifier</span>
+            </div>
+            <div class="panel-body">
+              <!-- Voice simulator input -->
+              <div class="voice-sim-box">
+                <label class="form-label" for="voice-transcript-input">Voice Command Assistant (Type or Speak):</label>
+                <div class="input-with-action">
+                  <input type="text" id="voice-transcript-input" class="form-control" placeholder="e.g. Create invoice for Ramesh 5000 for groceries">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-mic" onclick="toggleVoiceRecording()" title="Click to speak with microphone">
+                    🎙️ Speak
+                  </button>
+                  <button type="button" class="btn btn-accent btn-sm" onclick="submitVoiceCommand()">
+                    Process
+                  </button>
+                </div>
+              </div>
+
+
+              <!-- Voice commands list -->
+              <div class="voice-feed" id="voice-feed-container">
+                <div class="text-center py-4 text-muted">Loading voice command logs...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODALS                                                   -->
+  <!-- ======================================================== -->
+
+  <!-- Modal 1: Create Client -->
+  <div class="modal-backdrop" id="modal-client" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Client</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-client')">&times;</button>
+      </div>
+      <form id="form-create-client" onsubmit="handleCreateClient(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="client-name">Client Name &amp; Business *</label>
+            <input type="text" id="client-name" class="form-control" placeholder="e.g. Ramesh Kumar (Kirana Store)" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="client-phone">Phone / WhatsApp Number *</label>
+            <input type="text" id="client-phone" class="form-control" placeholder="+91 98765 43210" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="client-email">Email Address</label>
+            <input type="email" id="client-email" class="form-control" placeholder="ramesh@example.com">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-client')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-client">Create Client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Create Invoice -->
+  <div class="modal-backdrop" id="modal-invoice" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Generate New Invoice</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-invoice')">&times;</button>
+      </div>
+      <form id="form-create-invoice" onsubmit="handleCreateInvoice(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="invoice-client-id">Select Client *</label>
+            <select id="invoice-client-id" class="form-control" required>
+              <option value="">-- Choose Client --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="invoice-desc">Goods / Service Description *</label>
+            <input type="text" id="invoice-desc" class="form-control" placeholder="e.g. Web Development Phase 1" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="invoice-amount">Amount (INR ₹) *</label>
+              <input type="number" step="0.01" min="1" id="invoice-amount" class="form-control" placeholder="15000.00" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="invoice-due">Payment Due Date *</label>
+              <input type="date" id="invoice-due" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="invoice-upi">Merchant UPI ID (for QR payment)</label>
+            <input type="text" id="invoice-upi" class="form-control" placeholder="business@okaxis">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Recurring Invoice?</label>
+              <select id="invoice-recurring" class="form-control">
+                <option value="0">One-Time Billing</option>
+                <option value="1">Recurring Subscription</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Recurrence Cycle</label>
+              <select id="invoice-recurrence" class="form-control">
+                <option value="">None</option>
+                <option value="MONTHLY">Monthly</option>
+                <option value="WEEKLY">Weekly</option>
+                <option value="QUARTERLY">Quarterly</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-invoice')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-invoice">Create Invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Record Payment -->
+  <div class="modal-backdrop" id="modal-payment" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Payment Settlement</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-payment')">&times;</button>
+      </div>
+      <form id="form-create-payment" onsubmit="handleCreatePayment(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="payment-invoice-id">Select Invoice *</label>
+            <select id="payment-invoice-id" class="form-control" required onchange="populatePaymentAmount(this.value)">
+              <option value="">-- Choose Invoice --</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="payment-amount">Settlement Amount (₹) *</label>
+              <input type="number" step="0.01" min="1" id="payment-amount" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="payment-date">Payment Date *</label>
+              <input type="date" id="payment-date" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="payment-source">Payment Source</label>
+              <select id="payment-source" class="form-control">
+                <option value="upi_webhook">UPI Instant Transfer</option>
+                <option value="ocr">OCR Screenshot Scan</option>
+                <option value="manual">Manual Bank Transfer / Cash</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="payment-txid">Transaction Reference</label>
+              <input type="text" id="payment-txid" class="form-control" placeholder="e.g. UPI/20260921/AXIS/91823">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="payment-raw">Receipt Notes / Raw Verification Text</label>
+            <textarea id="payment-raw" class="form-control" rows="2" placeholder="e.g. WhatsApp screenshot verified on GPay"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-payment')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-payment">Record Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Backend API Configuration -->
+  <div class="modal-backdrop" id="modal-api-config" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Backend API Configuration</h3>
+        <button class="modal-close-btn" onclick="closeModal('modal-api-config')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted text-sm mb-3">
+          Configure the FastAPI backend server URL. The frontend will communicate via REST JSON requests.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="config-api-url">Backend Base URL</label>
+          <input type="text" id="config-api-url" class="form-control" value="http://127.0.0.1:8000">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-api-config')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveApiConfig()">Save &amp; Reconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

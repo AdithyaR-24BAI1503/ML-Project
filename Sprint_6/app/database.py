@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from .seed_data import seed_sample_data
 
 DB_PATH = Path(__file__).resolve().parent.parent / "chatbiz.db"
 _initialized = False
@@ -63,6 +64,7 @@ def _init_tables(conn):
         )
     """)
     conn.commit()
+    seed_sample_data(conn, force=False)
 
 def get_connection():
     global _initialized
@@ -73,8 +75,11 @@ def get_connection():
         _initialized = True
     return conn
 
-def init_db():
+def init_db(force_seed: bool = False):
     global _initialized
     with sqlite3.connect(DB_PATH) as conn:
         _init_tables(conn)
+        if force_seed:
+            seed_sample_data(conn, force=True)
     _initialized = True
+
