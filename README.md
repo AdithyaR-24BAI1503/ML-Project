@@ -1,35 +1,62 @@
-# ChatBiz — WhatsApp-First Business Management System
+# ChatBiz — WhatsApp-First MSME Business Management System
 
-A multi-sprint software engineering implementation for **ChatBiz**, an AI-powered business management platform tailored for Indian MSMEs (freelancers, tutors, kirana store owners, and service providers).
-
----
-
-## 📌 Project Overview
-
-ChatBiz enables small business owners to handle customer onboarding, invoice generation with UPI payment QR codes, payment verification, automated payment reminders, voice commands, and business analytics.
-
-This repository contains the complete 6-sprint iterative implementation of ChatBiz:
-
-| Sprint | Module / Feature Focus | Deliverables & Scope |
-| :--- | :--- | :--- |
-| **Sprint 1** | User Onboarding & DB Schema | Core database architecture, user registration endpoint, SQLAlchemy models, and NLP command parser. |
-| **Sprint 2** | Client Management & NLP | Natural language interface to add, search, update, list, and delete client profiles. Interactive web demo UI. |
-| **Sprint 3** | Invoicing & PDF Delivery | Dynamic invoice creation, PDF generation with embedded UPI payment QR code, and simulated WhatsApp PDF delivery. |
-| **Sprint 4** | Payment Tracking & OCR | Manual payment recording, payment history logging, payment status updates (Pending -> Paid), and payment screenshot OCR extraction. |
-| **Sprint 5** | Reminders & Voice Pipeline | Automated scheduled payment reminders (Before Due, Due Today, Overdue), recurring invoices, and voice command intent classification. |
-| **Sprint 6** | Analytics Dashboard & Deployment | Comprehensive business analytics dashboard, client metrics summary, CSV export endpoint, Docker containerization, and full test suite. |
+ChatBiz is an AI-powered business management platform tailored for Indian MSMEs (freelancers, tutors, kirana store owners, and service providers). It streamlines customer onboarding, UPI-linked invoicing, payment settlement with OCR extraction, automated WhatsApp reminders, voice assistant operations, and real-time executive financial analytics.
 
 ---
 
-## 🛠️ Database Architecture
+## 📌 Features
 
-The system utilizes SQLite for local development with a unified 5-table relational schema:
+- **Executive Analytics Dashboard**: Real-time telemetry on total revenue, collected payments, pending receivables, overdue exposure, and collection rates.
+- **Client CRM**: Manage customer contacts, invoice counts, and payment ledgers.
+- **UPI Invoicing & PDF Generation**: Generates PDF invoices with embedded UPI dynamic payment QR codes (scan-and-pay via GPay, PhonePe, Paytm).
+- **Payment Settlement & OCR**: Record manual payments, UPI webhook settlements, or upload payment receipts to extract transaction ID and amount automatically via OCR.
+- **WhatsApp Reminders Engine**: Automated 3-stage reminders (`BEFORE_DUE`, `DUE_TODAY`, `OVERDUE`) with simulated WhatsApp Business API delivery.
+- **Voice Command Assistant**: Spoken / typed natural language interface powered by intent classification and Web Speech API.
+- **CSV Data Export**: Instant streaming export of all business invoices.
 
-- **`clients`**: Customer profiles (`id`, `name`, `phone`, `email`, `created_at`).
-- **`invoices`**: Billing records (`id`, `client_id`, `description`, `amount`, `due_date`, `upi_id`, `status`, `pdf_path`, `recurring`, `recurrence`, `created_at`).
-- **`payments`**: Transaction records (`id`, `invoice_id`, `amount`, `transaction_id`, `payment_date`, `source`, `raw_text`, `created_at`).
-- **`reminders`**: Notification schedules (`id`, `invoice_id`, `reminder_type`, `scheduled_for`, `status`, `sent_at`, `created_at`).
-- **`voice_commands`**: Voice assistant transcripts & intent logs (`id`, `transcript`, `intent`, `created_at`).
+---
+
+## 🏗️ Project Architecture
+
+```
+chatbiz/
+├── app/
+│   ├── __init__.py          # Unified application package
+│   ├── main.py              # FastAPI endpoints uniting all business domains
+│   ├── database.py          # Unified SQLite database engine & session provider
+│   ├── models.py            # SQLAlchemy relational ORM models
+│   ├── schemas.py           # Pydantic request/response validation schemas
+│   ├── analytics.py         # Financial calculation & leaderboard algorithms
+│   ├── pdf_generator.py     # PDF generation with ReportLab & UPI QR code
+│   ├── ocr.py               # Payment screenshot OCR extraction
+│   ├── nlp.py               # Natural language parser for onboarding & clients
+│   ├── reminders.py         # WhatsApp payment reminders scheduler & runner
+│   ├── voice.py             # Voice transcription & intent classification
+│   ├── seed_data.py         # MSME sample dataset seeder
+│   └── services/            # Domain service logic
+│       ├── __init__.py
+│       ├── client_service.py
+│       ├── invoice_service.py
+│       └── payment_service.py
+├── frontend/
+│   ├── index.html           # Minimalist Executive Ledger dashboard (Stitch-designed)
+│   ├── styles.css           # Clean, professional B2B styling (Inter typography, no neon glow)
+│   └── app.js               # Reactive frontend client application
+├── tests/
+│   ├── __init__.py
+│   ├── test_api.py          # Core REST API & analytics test suite
+│   ├── test_users.py        # User onboarding & registration tests
+│   ├── test_nlp.py          # NLP command parsing tests
+│   ├── test_invoices.py     # Invoice creation, status, and PDF tests
+│   ├── test_payments.py     # Payment recording & settlement tests
+│   └── test_reminders.py    # Reminder scheduling & voice intent tests
+├── requirements.txt         # Consolidated Python dependencies
+├── Dockerfile               # Production container definition
+├── run_backend.bat          # Easy backend launcher script (Windows CMD)
+├── run_backend.ps1          # Easy backend launcher script (PowerShell)
+├── run_frontend.bat         # Easy frontend launcher script (Windows CMD)
+└── run_frontend.ps1         # Easy frontend launcher script (PowerShell)
+```
 
 ---
 
@@ -37,49 +64,55 @@ The system utilizes SQLite for local development with a unified 5-table relation
 
 ### 1. Installation
 
-Clone the repository and install all required Python packages:
+Install all required Python packages:
 
 ```bash
-git clone https://github.com/AdithyaR-24BAI1503/ML-Project.git
-cd ML-Project
-git checkout Database-connect-govind
-
 pip install -r requirements.txt
 ```
 
-### 2. Run Sprint 6 Web Dashboard
+### 2. Launch the Backend API Server
 
-To launch the full ChatBiz web dashboard locally:
-
+Using Python directly:
 ```bash
-cd Sprint_6
-py -m uvicorn app.main:app --port 8000 --reload
+py -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
+Or use the launcher script:
+```bash
+./run_backend.bat
+```
+The API server starts at **`http://127.0.0.1:8000`** with interactive Swagger documentation at **`http://127.0.0.1:8000/docs`**.
 
-Open your browser at **`http://127.0.0.1:8000`** to view the analytics dashboard.
+### 3. Launch the Frontend Dashboard
 
-### 3. Run Automated Tests
+Run the local web server:
+```bash
+py -m http.server 3000 --directory frontend
+```
+Or use the launcher script:
+```bash
+./run_frontend.bat
+```
+Open **`http://127.0.0.1:3000`** in any modern web browser (or directly open `frontend/index.html` or visit `http://127.0.0.1:8000/dashboard`).
 
-To run tests across all sprints:
+---
+
+## 🧪 Running Automated Tests
+
+Run the full unified test suite across all modules:
 
 ```bash
-# Test Sprint 1
-cd "Sprint 1" && py -m pytest
-
-# Test Sprint 6
-cd Sprint_6 && py -m pytest
+py -m pytest -v tests
 ```
 
 ---
 
 ## 🐳 Docker Deployment
 
-To build and run the ChatBiz Sprint 6 application in Docker:
+To build and run the complete ChatBiz application via Docker:
 
 ```bash
-cd Sprint_6
-docker build -t chatbiz-sprint6 .
-docker run -p 8000:8000 chatbiz-sprint6
+docker build -t chatbiz .
+docker run -p 8000:8000 chatbiz
 ```
 
 ---
