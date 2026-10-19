@@ -83,3 +83,20 @@ class VoiceCommandCreate(BaseModel):
 
 class VoiceDemo(BaseModel):
     transcript: str
+
+
+# WhatsApp AI Chat Schemas
+class ClientChatRequest(BaseModel):
+    client_id: int
+    message: str = Field(..., min_length=1)
+
+
+class ManagerChatRequest(BaseModel):
+    message: str = Field(..., min_length=1)
+
+
+class ClearChatRequest(BaseModel):
+    session_id: Optional[str] = None
+    client_id: Optional[int] = None
+    role: Optional[str] = None
+

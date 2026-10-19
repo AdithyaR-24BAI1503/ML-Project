@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (online) {
       loadAllData();
       const hash = (window.location.hash || "").replace("#", "");
-      if (["analytics", "clients", "invoices", "payments", "reminders"].includes(hash)) {
+      if (["analytics", "clients", "invoices", "payments", "reminders", "chat"].includes(hash)) {
         switchTab(hash);
       }
     }
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("hashchange", () => {
     const hash = (window.location.hash || "").replace("#", "");
-    if (["analytics", "clients", "invoices", "payments", "reminders"].includes(hash)) {
+    if (["analytics", "clients", "invoices", "payments", "reminders", "chat"].includes(hash)) {
       switchTab(hash);
     }
   });
@@ -144,6 +144,7 @@ function refreshCurrentTab(userInitiated = false) {
       case "invoices": return loadInvoices();
       case "payments": return loadPayments();
       case "reminders": return loadRemindersAndVoice();
+      case "chat": return loadChatData();
       default: return loadAnalytics();
     }
   })();
@@ -904,3 +905,497 @@ function showToast(message, type = "info") {
     setTimeout(() => toast.remove(), 250);
   }, 3500);
 }
+
+/* ==========================================================================
+   WhatsApp Business AI Chat System (Client & Manager)
+   Controller & Interaction Pipeline
+   ========================================================================== */
+let currentChatMode = "client"; // "client" | "manager"
+let activeChatClientId = null;
+let isClientChatSending = false;
+let isManagerChatSending = false;
+
+function setChatMode(mode) {
+  currentChatMode = mode;
+  
+  const clientBtn = document.getElementById("chat-mode-btn-client");
+  const managerBtn = document.getElementById("chat-mode-btn-manager");
+  const clientView = document.getElementById("chat-view-client");
+  const managerView = document.getElementById("chat-view-manager");
+
+  if (mode === "client") {
+    if (clientBtn) clientBtn.classList.add("active");
+    if (managerBtn) managerBtn.classList.remove("active");
+    if (clientView) clientView.style.display = "block";
+    if (managerView) managerView.style.display = "none";
+    const input = document.getElementById("input-client-chat");
+    if (input) input.focus();
+    if (activeChatClientId) {
+      loadClientChatHistory(activeChatClientId);
+    }
+  } else {
+    if (clientBtn) clientBtn.classList.remove("active");
+    if (managerBtn) managerBtn.classList.add("active");
+    if (clientView) clientView.style.display = "none";
+    if (managerView) managerView.style.display = "block";
+    const input = document.getElementById("input-manager-chat");
+    if (input) input.focus();
+    loadManagerChatHistory();
+  }
+}
+
+async function loadChatData() {
+  // Ensure clients list is loaded
+  if (!allClients || allClients.length === 0) {
+    try {
+      const res = await fetch(`${API_BASE}/api/clients`);
+      if (res.ok) {
+        allClients = await res.json();
+      }
+    } catch (err) {
+      console.warn("Could not fetch clients for chat:", err);
+    }
+  }
+
+  populateChatClientDropdown();
+
+  if (currentChatMode === "client") {
+    if (activeChatClientId) {
+      await loadClientChatHistory(activeChatClientId);
+    }
+  } else {
+    await loadManagerChatHistory();
+  }
+}
+
+function populateChatClientDropdown() {
+  const select = document.getElementById("chat-client-select");
+  if (!select) return;
+
+  const prevVal = select.value;
+  select.innerHTML = "";
+
+  if (!allClients || allClients.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No clients registered yet";
+    select.appendChild(opt);
+    return;
+  }
+
+  allClients.forEach((cl, idx) => {
+    const opt = document.createElement("option");
+    opt.value = cl.id;
+    const phoneStr = cl.phone ? ` (${cl.phone})` : "";
+    opt.textContent = `${cl.name}${phoneStr}`;
+    select.appendChild(opt);
+  });
+
+  if (prevVal && allClients.some(c => String(c.id) === String(prevVal))) {
+    select.value = prevVal;
+    activeChatClientId = parseInt(prevVal);
+  } else {
+    select.selectedIndex = 0;
+    activeChatClientId = allClients[0].id;
+  }
+
+  updateChatClientTelemetry();
+}
+
+function onChatClientChange() {
+  const select = document.getElementById("chat-client-select");
+  if (!select || !select.value) return;
+
+  activeChatClientId = parseInt(select.value);
+  updateChatClientTelemetry();
+  loadClientChatHistory(activeChatClientId);
+}
+
+function updateChatClientTelemetry() {
+  if (!activeChatClientId || !allClients) return;
+  const client = allClients.find(c => c.id === activeChatClientId);
+  if (!client) return;
+
+  const phoneEl = document.getElementById("chat-meta-phone");
+  const invoicesEl = document.getElementById("chat-meta-invoices");
+  const balanceEl = document.getElementById("chat-meta-balance");
+
+  if (phoneEl) phoneEl.textContent = client.phone || "No phone";
+  if (invoicesEl) invoicesEl.textContent = `${client.invoices_count || 0} bills`;
+  if (balanceEl) {
+    const pendingVal = parseFloat(client.pending_amount) || 0;
+    balanceEl.textContent = formatCurrency(pendingVal);
+    balanceEl.className = pendingVal > 0 ? "meta-value meta-due" : "meta-value";
+  }
+}
+
+async function loadClientChatHistory(clientId) {
+  const container = document.getElementById("client-chat-messages");
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/chat/history?client_id=${clientId}`);
+    if (res.ok) {
+      const data = await res.json();
+      renderChatMessages(container, data.messages || [], "client");
+    }
+  } catch (err) {
+    console.error("Failed to load client chat history:", err);
+  }
+}
+
+async function loadManagerChatHistory() {
+  const container = document.getElementById("manager-chat-messages");
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/chat/history?session_id=manager`);
+    if (res.ok) {
+      const data = await res.json();
+      renderChatMessages(container, data.messages || [], "manager");
+    }
+  } catch (err) {
+    console.error("Failed to load manager chat history:", err);
+  }
+}
+
+function renderChatMessages(container, messages, mode) {
+  // Keep the date divider and encrypted notice
+  const dateDivider = `<div class="wa-date-divider"><span>TODAY</span></div>`;
+  const notice = mode === "client"
+    ? `<div class="wa-encrypted-notice">🔒 Messages and responses are automated by ChatBiz AI WhatsApp Business Bot. Natural language queries are processed in real-time.</div>`
+    : `<div class="wa-encrypted-notice">⚡ Manager Executive Mode: You can issue commands to fetch any client's dossier, create invoices, record payments, view revenue telemetry, or dispatch payment reminders.</div>`;
+
+  let html = dateDivider + notice;
+
+  messages.forEach(msg => {
+    html += buildMessageBubbleHtml(msg);
+  });
+
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+function buildMessageBubbleHtml(msg) {
+  const isUser = msg.role === "user";
+  const rowClass = isUser ? "wa-message-row user-row" : "wa-message-row bot-row";
+  const bubbleClass = isUser ? "wa-bubble wa-bubble-user" : "wa-bubble wa-bubble-bot";
+  
+  const senderName = escapeHtml(msg.sender || (isUser ? "You" : "ChatBiz AI"));
+  const timeStr = formatChatTimestamp(msg.created_at);
+  const formattedBody = formatChatMessageContent(msg.content);
+  
+  const checkmarks = isUser ? `<span class="wa-checks">✓✓</span>` : "";
+  
+  let attachmentHtml = "";
+  if (msg.metadata) {
+    attachmentHtml = renderAttachmentWidget(msg.metadata);
+  }
+
+  return `
+    <div class="${rowClass}">
+      <div class="${bubbleClass}">
+        <div class="wa-bubble-header">
+          <span>${senderName}</span>
+        </div>
+        <div class="wa-bubble-content">${formattedBody}</div>
+        ${attachmentHtml}
+        <div class="wa-bubble-footer">
+          <span>${timeStr}</span>
+          ${checkmarks}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function formatChatTimestamp(isoStr) {
+  if (!isoStr) {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    return "";
+  }
+}
+
+function formatChatMessageContent(raw) {
+  if (!raw) return "";
+  let text = escapeHtml(raw);
+
+  // Bold: **text**
+  text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // Code: `code`
+  text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  // Italics: *text*
+  text = text.replace(/(^|[^\*])\*([^\*]+)\*([^\*]|$)/g, "$1<em>$2</em>$3");
+
+  // Bullet points
+  text = text.replace(/^[•\-\*]\s+(.*)$/gm, "<div style='display:flex; gap:6px; margin:2px 0;'><span>•</span><span>$1</span></div>");
+
+  // Line breaks
+  text = text.replace(/\n/g, "<br>");
+
+  return text;
+}
+
+function renderAttachmentWidget(meta) {
+  if (!meta || !meta.type) return "";
+
+  if (meta.type === "invoice_download" || meta.type === "invoice_created") {
+    const invId = meta.invoice_id;
+    const url = meta.download_url ? `${API_BASE}${meta.download_url}` : `${API_BASE}/api/invoices/${invId}/pdf`;
+    return `
+      <div class="wa-card-attachment">
+        <div class="wa-card-info">
+          <span class="wa-card-title">📄 Invoice #${String(invId).padStart(4, "0")} PDF</span>
+          <span class="wa-card-sub">With embedded UPI payment QR code</span>
+        </div>
+        <a href="${url}" target="_blank" download="invoice_${invId}.pdf" class="btn btn-secondary btn-sm">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </a>
+      </div>
+    `;
+  }
+
+  if (meta.type === "payment_info") {
+    return `
+      <div class="wa-card-attachment">
+        <div class="wa-card-info">
+          <span class="wa-card-title">📱 UPI Merchant ID</span>
+          <span class="wa-card-sub"><code>${escapeHtml(meta.upi_id || "chatbiz.merchant@upi")}</code></span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${meta.upi_id || "chatbiz.merchant@upi"}'); showToast('UPI ID copied to clipboard!', 'info');">
+          Copy UPI ID
+        </button>
+      </div>
+    `;
+  }
+
+  if (meta.type === "client_dossier" && meta.client) {
+    const cl = meta.client;
+    return `
+      <div class="wa-card-attachment">
+        <div class="wa-card-info">
+          <span class="wa-card-title">👤 ${escapeHtml(cl.name)}</span>
+          <span class="wa-card-sub">Phone: ${escapeHtml(cl.phone || "N/A")} • Pending: ${formatCurrency(meta.pending_balance)}</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="switchTab('invoices');">
+          View Invoices
+        </button>
+      </div>
+    `;
+  }
+
+  return "";
+}
+
+async function handleSendClientChat(event) {
+  if (event) event.preventDefault();
+  if (isClientChatSending) return;
+
+  const input = document.getElementById("input-client-chat");
+  const container = document.getElementById("client-chat-messages");
+  const sendBtn = document.getElementById("btn-client-send");
+  if (!input || !container) return;
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (!activeChatClientId) {
+    showToast("Please select a client account first.", "error");
+    return;
+  }
+
+  const selectedClient = allClients ? allClients.find(c => c.id === activeChatClientId) : null;
+  const clientName = selectedClient ? selectedClient.name : "You";
+
+  // Append user message bubble immediately
+  const userMsg = {
+    role: "user",
+    sender: clientName,
+    content: text,
+    created_at: new Date().toISOString()
+  };
+  container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml(userMsg));
+  container.scrollTop = container.scrollHeight;
+
+  input.value = "";
+  isClientChatSending = true;
+  if (sendBtn) sendBtn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/chat/client`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: activeChatClientId,
+        message: text
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const botMsg = {
+        role: "assistant",
+        sender: "ChatBiz AI (WhatsApp Business)",
+        content: data.reply,
+        metadata: data.metadata,
+        created_at: new Date().toISOString()
+      };
+      container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml(botMsg));
+      container.scrollTop = container.scrollHeight;
+
+      // Update client balance if telemetry changed
+      if (data.client) {
+        const found = allClients.find(c => c.id === data.client.id);
+        if (found) {
+          found.pending_amount = data.client.pending_balance;
+          updateChatClientTelemetry();
+        }
+      }
+    } else {
+      const err = await res.json().catch(() => ({ detail: "API Error" }));
+      container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml({
+        role: "assistant",
+        sender: "ChatBiz AI",
+        content: `⚠️ Error: ${err.detail || "Could not process request."}`,
+        created_at: new Date().toISOString()
+      }));
+    }
+  } catch (err) {
+    container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml({
+      role: "assistant",
+      sender: "ChatBiz AI",
+      content: "⚠️ Network connection to ChatBiz backend was interrupted.",
+      created_at: new Date().toISOString()
+    }));
+  } finally {
+    isClientChatSending = false;
+    if (sendBtn) sendBtn.disabled = false;
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+async function handleSendManagerChat(event) {
+  if (event) event.preventDefault();
+  if (isManagerChatSending) return;
+
+  const input = document.getElementById("input-manager-chat");
+  const container = document.getElementById("manager-chat-messages");
+  const sendBtn = document.getElementById("btn-manager-send");
+  if (!input || !container) return;
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Append user command bubble immediately
+  const userMsg = {
+    role: "user",
+    sender: "Manager",
+    content: text,
+    created_at: new Date().toISOString()
+  };
+  container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml(userMsg));
+  container.scrollTop = container.scrollHeight;
+
+  input.value = "";
+  isManagerChatSending = true;
+  if (sendBtn) sendBtn.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/chat/manager`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const botMsg = {
+        role: "assistant",
+        sender: "ChatBiz Operations AI",
+        content: data.reply,
+        metadata: data.metadata,
+        created_at: new Date().toISOString()
+      };
+      container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml(botMsg));
+      container.scrollTop = container.scrollHeight;
+
+      // If an operational command was executed, refresh all background datasets
+      if (data.action_taken) {
+        showToast(data.action_taken, "info");
+        loadInvoices();
+        loadClients();
+        loadAnalytics();
+      }
+    } else {
+      const err = await res.json().catch(() => ({ detail: "API Error" }));
+      container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml({
+        role: "assistant",
+        sender: "ChatBiz Operations AI",
+        content: `⚠️ Error executing command: ${err.detail || "Request failed."}`,
+        created_at: new Date().toISOString()
+      }));
+    }
+  } catch (err) {
+    container.insertAdjacentHTML("beforeend", buildMessageBubbleHtml({
+      role: "assistant",
+      sender: "ChatBiz Operations AI",
+      content: "⚠️ Failed to reach ChatBiz API server.",
+      created_at: new Date().toISOString()
+    }));
+  } finally {
+    isManagerChatSending = false;
+    if (sendBtn) sendBtn.disabled = false;
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function sendQuickPrompt(mode, promptText) {
+  if (mode === "client") {
+    const input = document.getElementById("input-client-chat");
+    if (input) {
+      input.value = promptText;
+      handleSendClientChat();
+    }
+  } else {
+    const input = document.getElementById("input-manager-chat");
+    if (input) {
+      input.value = promptText;
+      handleSendManagerChat();
+    }
+  }
+}
+
+async function clearCurrentChat(mode) {
+  const payload = mode === "client"
+    ? { client_id: activeChatClientId }
+    : { session_id: "manager" };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/chat/clear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      showToast("Conversation cleared", "info");
+      if (mode === "client") {
+        await loadClientChatHistory(activeChatClientId);
+      } else {
+        await loadManagerChatHistory();
+      }
+    }
+  } catch (err) {
+    showToast("Could not clear conversation", "error");
+  }
+}
+

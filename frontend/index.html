@@ -58,6 +58,11 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           Reminders &amp; Voice
         </button>
+        <button class="nav-tab-btn" id="tab-btn-chat" onclick="switchTab('chat')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          WhatsApp AI Chat
+          <span class="tab-badge" id="badge-chat-tag">AI</span>
+        </button>
       </nav>
 
       <!-- Right Action Items -->
@@ -414,6 +419,186 @@
           </div>
 
         </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 6: WHATSAPP BUSINESS AI CHAT                         -->
+      <!-- ======================================================== -->
+      <section class="tab-pane" id="pane-chat">
+        
+        <!-- Segmented Mode Switcher (Client vs Manager) -->
+        <div class="chat-mode-bar">
+          <div class="chat-segmented-control">
+            <button class="chat-mode-btn active" id="chat-mode-btn-client" onclick="setChatMode('client')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Client WhatsApp Portal
+            </button>
+            <button class="chat-mode-btn" id="chat-mode-btn-manager" onclick="setChatMode('manager')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              Manager Operations Assistant
+            </button>
+          </div>
+          <div class="chat-info-pill">
+            <span class="status-dot-green"></span>
+            <span>WhatsApp Business AI Engine • 24/7 Automated</span>
+          </div>
+        </div>
+
+        <!-- VIEW 1: CLIENT WHATSAPP PORTAL -->
+        <div id="chat-view-client" class="chat-view-container">
+          
+          <!-- Client Selector Bar -->
+          <div class="card chat-selector-card">
+            <div class="chat-selector-row">
+              <div class="chat-selector-field">
+                <label class="form-label" for="chat-client-select">
+                  <strong>Select Client Account:</strong>
+                </label>
+                <select id="chat-client-select" class="form-control" onchange="onChatClientChange()">
+                  <option value="">Loading client directory...</option>
+                </select>
+              </div>
+
+              <!-- Quick Telemetry for Selected Client -->
+              <div class="chat-client-meta" id="chat-client-meta">
+                <div class="meta-tag">
+                  <span class="meta-label">Phone:</span>
+                  <span class="meta-value" id="chat-meta-phone">+91 00000 00000</span>
+                </div>
+                <div class="meta-tag">
+                  <span class="meta-label">Invoices:</span>
+                  <span class="meta-value" id="chat-meta-invoices">0</span>
+                </div>
+                <div class="meta-tag">
+                  <span class="meta-label">Pending Dues:</span>
+                  <span class="meta-value meta-due" id="chat-meta-balance">₹0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WhatsApp Window Container -->
+          <div class="wa-app-window">
+            
+            <!-- WhatsApp Business Header -->
+            <div class="wa-header">
+              <div class="wa-profile">
+                <div class="wa-avatar">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                </div>
+                <div class="wa-identity">
+                  <div class="wa-title-row">
+                    <span class="wa-business-name">ChatBiz Enterprise Solutions</span>
+                    <span class="wa-verified-badge" title="Official Verified WhatsApp Business Account">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      Verified Business
+                    </span>
+                  </div>
+                  <span class="wa-status-text">Official WhatsApp Business Account • Always Online</span>
+                </div>
+              </div>
+
+              <div class="wa-header-actions">
+                <button class="btn btn-secondary btn-sm" onclick="clearCurrentChat('client')" title="Clear chat history for this client">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Clear Chat
+                </button>
+              </div>
+            </div>
+
+            <!-- WhatsApp Message Feed -->
+            <div class="wa-messages-canvas" id="client-chat-messages">
+              <div class="wa-date-divider"><span>TODAY</span></div>
+              <div class="wa-encrypted-notice">
+                🔒 Messages and responses are automated by ChatBiz AI WhatsApp Business Bot. Natural language queries are processed in real-time.
+              </div>
+              <!-- Bubbles injected by JavaScript -->
+            </div>
+
+            <!-- Client Quick Suggestions Chips -->
+            <div class="wa-chips-row" id="client-chips-row">
+              <span class="chips-label">Quick Prompts:</span>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'What is my outstanding balance?')">💰 Check Balance</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'Send my latest invoice PDF')">📄 Latest Invoice</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'How do I pay via UPI?')">💳 UPI &amp; QR Code</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'Check my payment history')">🧾 Payment History</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'What are your business hours?')">🕒 Business Hours</button>
+            </div>
+
+            <!-- WhatsApp Input Bar -->
+            <form class="wa-input-bar" id="form-client-chat" onsubmit="handleSendClientChat(event)">
+              <input type="text" id="input-client-chat" class="wa-input" placeholder="Ask anything about your account, invoices, dues, or payment..." autocomplete="off" required>
+              <button type="submit" class="wa-send-btn" id="btn-client-send" title="Send WhatsApp Message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </form>
+
+          </div>
+        </div>
+
+        <!-- VIEW 2: MANAGER OPERATIONS ASSISTANT -->
+        <div id="chat-view-manager" class="chat-view-container" style="display: none;">
+          
+          <!-- Manager Operations Window -->
+          <div class="wa-app-window">
+            
+            <!-- Manager WhatsApp Header -->
+            <div class="wa-header">
+              <div class="wa-profile">
+                <div class="wa-avatar wa-avatar-manager">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10h-10V2z"/><path d="M12 12L2.5 7.5"/></svg>
+                </div>
+                <div class="wa-identity">
+                  <div class="wa-title-row">
+                    <span class="wa-business-name">ChatBiz Executive Assistant (AI Manager)</span>
+                    <span class="wa-verified-badge" style="background:#e0f2fe; color:#0369a1;" title="Internal Operations Assistant">
+                      Operations Active
+                    </span>
+                  </div>
+                  <span class="wa-status-text">Natural Language Command Bot • Invoices, Lookups, Settlements &amp; KPIs</span>
+                </div>
+              </div>
+
+              <div class="wa-header-actions">
+                <button class="btn btn-secondary btn-sm" onclick="clearCurrentChat('manager')" title="Clear manager chat log">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Clear History
+                </button>
+              </div>
+            </div>
+
+            <!-- WhatsApp Message Feed -->
+            <div class="wa-messages-canvas" id="manager-chat-messages">
+              <div class="wa-date-divider"><span>TODAY</span></div>
+              <div class="wa-encrypted-notice">
+                ⚡ Manager Executive Mode: You can issue commands to fetch any client's dossier, create invoices, record payments, view revenue telemetry, or dispatch payment reminders.
+              </div>
+              <!-- Bubbles injected by JavaScript -->
+            </div>
+
+            <!-- Manager Quick Prompts Chips -->
+            <div class="wa-chips-row" id="manager-chips-row">
+              <span class="chips-label">Command Suggestions:</span>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Show details for client Rajesh Singh')">👤 Rajesh Dossier</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Show details for client Priya Sharma')">👤 Priya Dossier</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'What is our total revenue and collection rate?')">📊 Revenue &amp; KPIs</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Show all overdue invoices')">⚠️ Overdue Bills</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'List all clients')">👥 Client Directory</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Create invoice for Rajesh 4500 due 2026-11-20 for Website Upgrades')">📄 Create Invoice</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Help')">🛠️ View Operations</button>
+            </div>
+
+            <!-- Manager Input Bar -->
+            <form class="wa-input-bar" id="form-manager-chat" onsubmit="handleSendManagerChat(event)">
+              <input type="text" id="input-manager-chat" class="wa-input" placeholder="Type a command (e.g. 'Show details for client Rajesh', 'Create invoice...', 'Total revenue')..." autocomplete="off" required>
+              <button type="submit" class="wa-send-btn" id="btn-manager-send" title="Execute Manager Command">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </button>
+            </form>
+
+          </div>
+        </div>
+
       </section>
 
     </main>

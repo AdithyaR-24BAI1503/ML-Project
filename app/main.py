@@ -25,6 +25,13 @@ from .ocr import extract_payment_data
 from .nlp import parse_command
 from .reminders import seed_invoice_reminders, run_due_reminders
 from .voice import transcribe_demo, classify_voice_command
+from .chat import (
+    handle_client_message,
+    handle_manager_message,
+    get_chat_history,
+    clear_chat_history,
+    save_chat_message
+)
 from . import models, schemas
 from .schemas import (
     UserRegisterRequest,
@@ -37,6 +44,9 @@ from .schemas import (
     VoiceCommandCreate,
     VoiceDemo,
     RecurringInvoiceCreate,
+    ClientChatRequest,
+    ManagerChatRequest,
+    ClearChatRequest,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -852,3 +862,118 @@ def export_invoices():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=chatbiz_invoices.csv"}
     )
+
+
+# ---------------------------------------------------------
+# WhatsApp Business AI Chat Endpoints (Client & Manager)
+# ---------------------------------------------------------
+@app.get("/api/chat/history")
+def fetch_chat_history(
+    session_id: Optional[str] = Query(None),
+    client_id: Optional[int] = Query(None)
+):
+    """
+    Returns WhatsApp chat messages for a specific client session or manager session.
+    If empty, initializes with a personalized welcome message.
+    """
+    with get_connection() as conn:
+        resolved_session = session_id
+        if not resolved_session and client_id:
+            resolved_session = f"client_{client_id}"
+        elif not resolved_session:
+            resolved_session = "manager"
+
+        history = get_chat_history(conn, resolved_session)
+
+        # If history is empty, populate an initial greeting
+        if not history:
+            if client_id:
+                client = conn.execute("SELECT * FROM clients WHERE id=?", (client_id,)).fetchone()
+                c_name = client["name"] if client else "Valued Client"
+                fname = c_name.split()[0]
+                pending = conn.execute(
+                    "SELECT COALESCE(SUM(amount), 0) FROM invoices WHERE client_id=? AND status!='Paid'",
+                    (client_id,)
+                ).fetchone()[0]
+                bal_text = f"Your current outstanding balance is ₹{pending:,.2f}." if pending > 0 else "Your account has zero outstanding balance."
+                welcome_msg = (
+                    f"Hello {fname}! 👋 Welcome to ChatBiz Automated WhatsApp Business.\n\n"
+                    f"{bal_text}\n\n"
+                    f"I can assist you with your balance, invoice PDFs, UPI payment QR codes, and payment history in natural language. How may I help you today?"
+                )
+                save_chat_message(
+                    conn=conn,
+                    session_id=resolved_session,
+                    role="assistant",
+                    sender="ChatBiz AI (WhatsApp Business)",
+                    content=welcome_msg,
+                    client_id=client_id,
+                    metadata={"type": "welcome", "pending_balance": pending}
+                )
+            else:
+                welcome_msg = (
+                    "Hello Manager! 👔 Welcome to your ChatBiz WhatsApp Operations Assistant.\n\n"
+                    "I can execute natural language operations for you:\n"
+                    "• *'Show details for client Rajesh Patel'*\n"
+                    "• *'Create invoice for Rohit 5000 due 2026-11-15'*\n"
+                    "• *'What is our total revenue & collection rate?'*\n"
+                    "• *'List all overdue invoices'*\n"
+                    "• *'Mark invoice 2 as paid'*\n\n"
+                    "Type any command or query to get started!"
+                )
+                save_chat_message(
+                    conn=conn,
+                    session_id=resolved_session,
+                    role="assistant",
+                    sender="ChatBiz Operations AI",
+                    content=welcome_msg,
+                    client_id=None,
+                    metadata={"type": "welcome"}
+                )
+            history = get_chat_history(conn, resolved_session)
+
+        return {"session_id": resolved_session, "messages": history}
+
+
+@app.post("/api/chat/client")
+def send_client_chat(payload: ClientChatRequest):
+    """
+    Processes natural language message from a selected client, answering regarding
+    invoices, dues, payment UPI, and business queries.
+    """
+    with get_connection() as conn:
+        result = handle_client_message(
+            client_id=payload.client_id,
+            message=payload.message,
+            conn=conn
+        )
+        return result
+
+
+@app.post("/api/chat/manager")
+def send_manager_chat(payload: ManagerChatRequest):
+    """
+    Processes natural language command from manager, executing client dossier lookups,
+    invoice issuance, payment settlements, reminders, and financial KPI analytics.
+    """
+    with get_connection() as conn:
+        result = handle_manager_message(
+            message=payload.message,
+            conn=conn
+        )
+        return result
+
+
+@app.post("/api/chat/clear")
+def clear_chat(payload: ClearChatRequest):
+    """Clears conversation messages for a client session or manager thread."""
+    with get_connection() as conn:
+        target_session = payload.session_id
+        if not target_session and payload.client_id:
+            target_session = f"client_{payload.client_id}"
+        elif not target_session:
+            target_session = "manager"
+
+        cleared_count = clear_chat_history(conn, target_session)
+        return {"message": f"Cleared {cleared_count} messages for session {target_session}."}
+

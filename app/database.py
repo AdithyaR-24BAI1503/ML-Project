@@ -100,6 +100,18 @@ def _init_tables(conn):
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            sender TEXT NOT NULL,
+            client_id INTEGER,
+            content TEXT NOT NULL,
+            metadata_json TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     conn.commit()
 
     # Lazy-import to prevent circular dependency
