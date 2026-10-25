@@ -22,6 +22,9 @@ def seed_invoice_reminders(invoice_id: int, due_date: str):
     - DUE_TODAY: on the due date
     - OVERDUE: 1 day past due
     """
+    if not due_date or str(due_date).lower() in ("none", "n/a", "no due", "no due date", "null"):
+        return
+
     for kind, offset in [("BEFORE_DUE", -3), ("DUE_TODAY", 0), ("OVERDUE", 1)]:
         try:
             # Handles YYYY-MM-DD or full ISO

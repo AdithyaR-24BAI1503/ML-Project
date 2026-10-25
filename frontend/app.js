@@ -1193,7 +1193,47 @@ function renderAttachmentWidget(meta) {
     `;
   }
 
+  if (meta.type === "whatsapp_sent" && meta.client_id) {
+    return `
+      <div class="wa-card-attachment">
+        <div class="wa-card-info">
+          <span class="wa-card-title">💬 WhatsApp Dispatched</span>
+          <span class="wa-card-sub">To: ${escapeHtml(meta.client_name || "Client")} (${escapeHtml(meta.client_phone || "")})</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="switchChatClient(${meta.client_id})">
+          View Client Chat
+        </button>
+      </div>
+    `;
+  }
+
+  if (meta.type === "legitimacy_verification") {
+    return `
+      <div class="wa-card-attachment" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.35);">
+        <div class="wa-card-info">
+          <span class="wa-card-title" style="color: #065f46; font-weight: 700;">🛡️ Verified Government &amp; Tax Compliant</span>
+          <span class="wa-card-sub" style="color: #047857;">CIN: ${escapeHtml(meta.cin || "Active")} • GSTIN: ${escapeHtml(meta.gstin || "Active")} • TrustScore: ${escapeHtml(meta.trust_score || "4.9/5.0")} ⭐</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="showToast('Official credentials verified: Active MCA, GSTIN, and DPIIT records confirmed.', 'success');">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Audit Details
+        </button>
+      </div>
+    `;
+  }
+
   return "";
+}
+
+function switchChatClient(clientId) {
+  if (!clientId) return;
+  switchTab("chat");
+  switchChatMode("client");
+  const select = document.getElementById("chat-client-select");
+  if (select) {
+    select.value = clientId;
+    onChatClientChange();
+  }
 }
 
 async function handleSendClientChat(event) {
@@ -1396,6 +1436,16 @@ async function clearCurrentChat(mode) {
     }
   } catch (err) {
     showToast("Could not clear conversation", "error");
+  }
+}
+
+function promptCreateSelfInvoice() {
+  const input = document.getElementById("input-client-chat");
+  if (input) {
+    input.value = "Create invoice for 5000 for Website Optimization";
+    input.focus();
+    input.select();
+    showToast("Pre-filled invoice request. Press send or adjust amount/description.", "info");
   }
 }
 

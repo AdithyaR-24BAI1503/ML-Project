@@ -499,6 +499,10 @@
               </div>
 
               <div class="wa-header-actions">
+                <button class="btn btn-primary btn-sm" onclick="promptCreateSelfInvoice()" title="Generate an invoice for this client account">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Create Invoice
+                </button>
                 <button class="btn btn-secondary btn-sm" onclick="clearCurrentChat('client')" title="Clear chat history for this client">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   Clear Chat
@@ -518,10 +522,12 @@
             <!-- Client Quick Suggestions Chips -->
             <div class="wa-chips-row" id="client-chips-row">
               <span class="chips-label">Quick Prompts:</span>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'Create invoice for 5000 for Website Optimization')">📝 Create Invoice</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'What is my outstanding balance?')">💰 Check Balance</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'Send my latest invoice PDF')">📄 Latest Invoice</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'How do I pay via UPI?')">💳 UPI &amp; QR Code</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'Check my payment history')">🧾 Payment History</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'Is this service provider legitimate? Check credentials')">🛡️ Verify Legitimacy</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('client', 'What are your business hours?')">🕒 Business Hours</button>
             </div>
 
@@ -585,6 +591,7 @@
               <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Show all overdue invoices')">⚠️ Overdue Bills</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'List all clients')">👥 Client Directory</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Create invoice for Rajesh 4500 due 2026-11-20 for Website Upgrades')">📄 Create Invoice</button>
+              <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Send whatsapp to Rajesh asking them to do the needy')">💬 Send WhatsApp</button>
               <button class="wa-chip-btn" onclick="sendQuickPrompt('manager', 'Help')">🛠️ View Operations</button>
             </div>
 
